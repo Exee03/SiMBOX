@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:custom_splash/custom_splash.dart';
 import 'package:simbox/private/Intro.dart';
 import 'package:simbox/private/dashboard.dart';
+import 'package:simbox/private/screens/door_screens.dart';
 import 'package:simbox/public/sign_up.dart';
 import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/widgets/provider_widget.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    SystemChrome.setEnabledSystemUIOverlays([]);
     Function duringSplash = () {
       print('Something background process');
       int a = 123 + 23;
@@ -23,13 +30,14 @@ class MyApp extends StatelessWidget {
     };
 
     Map<int, Widget> op = {1: MyApp(), 2: MyApp()};
-    
+
     return Provider(
       auth: AuthService(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: "SiMBOX",
         theme: ThemeData(
+          fontFamily: 'OpenSans',
           primarySwatch: Colors.green,
         ),
         home: CustomSplash(
@@ -50,6 +58,7 @@ class MyApp extends StatelessWidget {
           '/signIn': (BuildContext context) =>
               SignUp(authFormType: AuthFormType.signIn),
           '/home': (BuildContext context) => HomeController(),
+          '/doorScreen': (BuildContext context) => DoorScreen()
         },
       ),
     );

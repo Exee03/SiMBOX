@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:simbox/services/theme.dart';
 import 'package:simbox/widgets/provider_widget.dart';
 
-final primaryColor = const Color(0xFF75A2EA);
 
 enum AuthFormType { signIn, signUp }
 
