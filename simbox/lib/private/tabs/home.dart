@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
@@ -20,17 +21,25 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   String _doorStatus;
-  String _itemStatus;
+  // String _itemStatus;
   DatabaseReference _doorRef;
-  DatabaseReference _itemRef;
+  // DatabaseReference _itemRef;
   StreamSubscription<Event> _doorSubscription;
-  StreamSubscription<Event> _itemSubscription;
+  // StreamSubscription<Event> _itemSubscription;
   DatabaseError _error;
   Color doorCardColor = CupertinoColors.destructiveRed;
+  DateTime date = DateTime.now();
+  String dateNow = '';
 
   @override
   void initState() {
     super.initState();
+    dateNow = date.day.toString() +
+        ' - ' +
+        date.month.toString() +
+        ' - ' +
+        date.year.toString();
+
     _doorRef = FirebaseDatabase.instance.reference().child('door');
     _doorRef.keepSynced(true);
     _doorSubscription = _doorRef.onValue.listen((Event event) {
@@ -47,28 +56,28 @@ class _HomeTabState extends State<HomeTab> {
         _error = error;
       });
     });
-    _itemRef = FirebaseDatabase.instance.reference().child('item');
-    _itemRef.keepSynced(true);
-    _itemSubscription = _itemRef.onValue.listen((Event event) {
-      List<Mail> _item = fromDb(event.snapshot);
-      setState(() {
-        _error = null;
-        _itemStatus =
-            _item[_item.length - 1].count.toString() ?? 'synchronizing...';
-      });
-    }, onError: (Object o) {
-      final DatabaseError error = o;
-      setState(() {
-        _error = error;
-      });
-    });
+    // _itemRef = FirebaseDatabase.instance.reference().child('item');
+    // _itemRef.keepSynced(true);
+    // _itemSubscription = _itemRef.onValue.listen((Event event) {
+    //   List<Mail> _item = fromDb(event.snapshot);
+    //   setState(() {
+    //     _error = null;
+    //     _itemStatus =
+    //         _item[_item.length - 1].count.toString() ?? 'synchronizing...';
+    //   });
+    // }, onError: (Object o) {
+    //   final DatabaseError error = o;
+    //   setState(() {
+    //     _error = error;
+    //   });
+    // });
   }
 
   @override
   void dispose() {
     super.dispose();
     _doorSubscription.cancel();
-    _itemSubscription.cancel();
+    // _itemSubscription.cancel();
   }
 
   @override
@@ -76,83 +85,87 @@ class _HomeTabState extends State<HomeTab> {
     AuthService auth = Provider.of(context).auth;
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    return Stack(
-      children: <Widget>[
-        Container(
-          padding: EdgeInsets.all(40),
-          constraints: BoxConstraints.expand(height: height * 0.4),
-          decoration: BoxDecoration(
-            gradient: new LinearGradient(
-              colors: [primaryColor, Colors.blueAccent],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topRight,
-              stops: [0.2, 1.0],
-              tileMode: TileMode.clamp,
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-          ),
-          child: Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                FutureBuilder<FirebaseUser>(
-                  future: auth.getCurrentUser(),
-                  builder: (context, user) {
-                    return Expanded(
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: Text(
-                              "Hai ${user.data.displayName}!",
-                              style: TextStyle(
-                                  fontFamily: 'OpenSans',
-                                  fontSize: 25.0,
-                                  color: secondaryColor),
-                            ),
-                          ),
-                          CircleAvatar(
-                            backgroundColor: Colors.white,
-                            radius: width * 0.1,
-                            backgroundImage: NetworkImage(user.data.photoUrl),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(
-                  height: height * 0.01,
-                ),
-                Text(
-                  "Dashboard",
-                  style: TextStyle(
-                      fontFamily: 'OpenSans',
-                      fontSize: 50.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
-                )
-              ],
-            ),
-          ),
-        ),
-        Container(
-          // color: Colors.red,
-          // height: 500,
-          margin: EdgeInsets.only(top: height * 0.42),
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
+    return FutureBuilder<FirebaseUser>(
+        future: auth.getCurrentUser(),
+        builder: (context, user) {
+          if (!user.hasData) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          return Stack(
             children: <Widget>[
-              doorCard(height, width),
-              mailCard(height, width)
+              Container(
+                  padding: EdgeInsets.all(40),
+                  constraints: BoxConstraints.expand(height: height * 0.4),
+                  decoration: BoxDecoration(
+                    gradient: new LinearGradient(
+                      colors: [primaryColor, Colors.blueAccent],
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topRight,
+                      stops: [0.2, 1.0],
+                      tileMode: TileMode.clamp,
+                    ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(30),
+                      bottomRight: Radius.circular(30),
+                    ),
+                  ),
+                  child: Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  "Hi !\n${user.data.displayName}",
+                                  style: TextStyle(
+                                      fontFamily: 'OpenSans',
+                                      fontSize: 25.0,
+                                      color: secondaryColor),
+                                ),
+                              ),
+                              CircleAvatar(
+                                backgroundColor: Colors.white,
+                                radius: width * 0.1,
+                                backgroundImage:
+                                    NetworkImage(user.data.photoUrl),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: height * 0.01,
+                        ),
+                        Text(
+                          "Dashboard",
+                          style: TextStyle(
+                              fontFamily: 'OpenSans',
+                              fontSize: 50.0,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        )
+                      ],
+                    ),
+                  )),
+              Container(
+                // color: Colors.red,
+                // height: 500,
+                margin: EdgeInsets.only(top: height * 0.42),
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: <Widget>[
+                    doorCard(height, width),
+                    mailCard(height, width, user.data)
+                  ],
+                ),
+              ),
             ],
-          ),
-        ),
-      ],
-    );
+          );
+        });
   }
 
   InkWell doorCard(double height, double width) {
@@ -202,7 +215,7 @@ class _HomeTabState extends State<HomeTab> {
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 18.0,
-                            fontWeight: FontWeight.bold)),
+                            fontWeight: FontWeight.bold))
                   ],
                 ),
               ),
@@ -213,7 +226,7 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  InkWell mailCard(double height, double width) {
+  InkWell mailCard(double height, double width, FirebaseUser user) {
     return InkWell(
       onTap: () => Navigator.of(context).pushNamed('/mailScreen'),
       child: Card(
@@ -230,7 +243,7 @@ class _HomeTabState extends State<HomeTab> {
             const ListTile(
               trailing: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Icon(Icons.local_mall, size: 40),
+                child: Icon(Icons.markunread_mailbox, size: 40),
               ),
               title: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -258,12 +271,30 @@ class _HomeTabState extends State<HomeTab> {
                     Text('Items:',
                         textAlign: TextAlign.right,
                         style: TextStyle(color: Colors.white, fontSize: 18.0)),
-                    Text('  $_itemStatus',
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.bold)),
+                    StreamBuilder(
+                        stream: Firestore.instance
+                            .collection("items")
+                            .where('userUid', isEqualTo: user.uid)
+                            .snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          List data = snapshot.data.documents;
+                          String itemCount = '0';
+                          data.forEach((e) => {
+                                if (e['date'] == dateNow)
+                                  {itemCount = e['count'].toString()}
+                              });
+                          return Text('  $itemCount',
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold));
+                        }),
                   ],
                 ),
               ),

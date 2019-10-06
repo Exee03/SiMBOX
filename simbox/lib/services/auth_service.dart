@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final Firestore _db = Firestore.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  final FirebaseMessaging _messaging = FirebaseMessaging();
 
   Stream<String> get onAuthStateChanged => _firebaseAuth.onAuthStateChanged.map(
         (FirebaseUser user) => user?.uid,
@@ -76,13 +78,15 @@ class AuthService {
   }
 
   void updateUserData(FirebaseUser user) async {
+    final String token = await _messaging.getToken();
     DocumentReference ref = _db.collection('users').document(user.uid);
     return ref.setData({
       'uid': user.uid,
       'email': user.email,
       'displayName': user.displayName,
       'lastSeen': DateTime.now(),
-      'photoUrl': user.photoUrl
+      'photoUrl': user.photoUrl,
+      'token': token
     }, merge: true);
   }
 }
