@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:custom_splash/custom_splash.dart';
-import 'package:simbox/private/Intro.dart';
+import 'package:simbox/public/intro.dart';
 import 'package:simbox/private/dashboard.dart';
-import 'package:simbox/private/screens/door_screens.dart';
+import 'package:simbox/private/screens/door_screen.dart';
+import 'package:simbox/private/screens/mail_screen.dart';
 import 'package:simbox/public/sign_up.dart';
 import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/widgets/provider_widget.dart';
@@ -58,7 +59,8 @@ class MyApp extends StatelessWidget {
           '/signIn': (BuildContext context) =>
               SignUp(authFormType: AuthFormType.signIn),
           '/home': (BuildContext context) => HomeController(),
-          '/doorScreen': (BuildContext context) => DoorScreen()
+          '/doorScreen': (BuildContext context) => DoorScreen(),
+          '/mailScreen': (BuildContext context) => MailScreen(),
         },
       ),
     );

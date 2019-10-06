@@ -3,7 +3,6 @@ import 'package:auto_size_text/auto_size_text.dart';
 import 'package:simbox/services/theme.dart';
 import 'package:simbox/widgets/provider_widget.dart';
 
-
 enum AuthFormType { signIn, signUp }
 
 class SignUp extends StatefulWidget {
@@ -12,8 +11,7 @@ class SignUp extends StatefulWidget {
   SignUp({Key key, @required this.authFormType}) : super(key: key);
 
   @override
-  _SignUpState createState() =>
-      _SignUpState(authFormType: this.authFormType);
+  _SignUpState createState() => _SignUpState(authFormType: this.authFormType);
 }
 
 class _SignUpState extends State<SignUp> {
@@ -42,17 +40,29 @@ class _SignUpState extends State<SignUp> {
     form.save();
     try {
       final auth = Provider.of(context).auth;
-      if(authFormType == AuthFormType.signIn) {
+      if (authFormType == AuthFormType.signIn) {
         String uid = await auth.signInWithEmailAndPassword(_email, _password);
         print("Signed In with ID $uid");
         Navigator.of(context).pushReplacementNamed('/home');
       } else {
-        String uid = await auth.createUserWithEmailAndPassword(_email, _password, _name);
+        String uid =
+            await auth.createUserWithEmailAndPassword(_email, _password, _name);
         print("Signed up with New ID $uid");
         Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {
-      print (e);
+      print(e);
+    }
+  }
+
+  void usingGoogle() async {
+    try {
+      final auth = Provider.of(context).auth;
+      String uid = await auth.signInWithGoogle();
+      print("Signed In with ID $uid");
+      Navigator.of(context).pushReplacementNamed('/home');
+    } catch (e) {
+      print(e);
     }
   }
 
@@ -173,21 +183,27 @@ class _SignUpState extends State<SignUp> {
       Container(
         width: MediaQuery.of(context).size.width * 0.7,
         child: RaisedButton(
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0)),
-            color: Colors.white,
-            textColor: primaryColor,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                _submitButtonText,
-                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w300),
-              ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
+          color: Colors.white,
+          textColor: primaryColor,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              _submitButtonText,
+              style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.w300),
             ),
-            onPressed: submit,
+          ),
+          onPressed: submit,
         ),
       ),
+      Text(
+        "\n---------------- OR CONNECT WITH ----------------\n",
+        style: TextStyle(color: Colors.white),
+      ),
+      _signInButton(_submitButtonText),
       FlatButton(
+        padding: EdgeInsets.only(top: 50),
         child: Text(
           _switchButtonText,
           style: TextStyle(color: Colors.white),
@@ -195,7 +211,38 @@ class _SignUpState extends State<SignUp> {
         onPressed: () {
           switchFormState(_newFormState);
         },
-      )
+      ),
     ];
+  }
+
+  Widget _signInButton(String text) {
+    return RaisedButton(
+      splashColor: Colors.grey,
+      onPressed: usingGoogle,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+      highlightElevation: 0,
+      // borderSide: BorderSide(color: Colors.grey),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Image(image: AssetImage("assets/google_logo.png"), height: 35.0),
+            Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Text(
+                '$text with Google',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.black,
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -101,7 +101,7 @@ class CustomDialog extends StatelessWidget {
   }
 
   showSecondaryButton(BuildContext context) {
-    if (secondaryButtonRoute != null && secondaryButtonText != null ){
+    if (secondaryButtonRoute != null && secondaryButtonText != null) {
       return FlatButton(
         child: AutoSizeText(
           secondaryButtonText,

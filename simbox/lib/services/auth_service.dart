@@ -1,36 +1,69 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final Firestore _db = Firestore.instance;
+  final GoogleSignIn googleSignIn = GoogleSignIn();
 
   Stream<String> get onAuthStateChanged => _firebaseAuth.onAuthStateChanged.map(
-    (FirebaseUser user) => user?.uid,
-  );
+        (FirebaseUser user) => user?.uid,
+      );
 
-  Future<String> createUserWithEmailAndPassword(String email, String password, String name) async {
+  Future<String> createUserWithEmailAndPassword(
+      String email, String password, String name) async {
     final currentUser = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password
-    );
+        email: email, password: password);
 
     var userUpdateInfo = UserUpdateInfo();
     userUpdateInfo.displayName = name;
-    userUpdateInfo.photoUrl = 'https://www.theatricalrights.com/wp-content/themes/trw/assets/images/default-user.png';
+    userUpdateInfo.photoUrl =
+        'https://www.theatricalrights.com/wp-content/themes/trw/assets/images/default-user.png';
     await currentUser.user.updateProfile(userUpdateInfo);
     await currentUser.user.reload();
     updateUserData(currentUser.user);
     return currentUser.user.uid;
   }
 
-  Future<String> signInWithEmailAndPassword(String email, String password) async {
+  Future<String> signInWithEmailAndPassword(
+      String email, String password) async {
     final currentUser = await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password
-    );
+        email: email, password: password);
+    if (currentUser.user.photoUrl == null) {
+      var userUpdateInfo = UserUpdateInfo();
+      userUpdateInfo.photoUrl =
+          'https://www.theatricalrights.com/wp-content/themes/trw/assets/images/default-user.png';
+      await currentUser.user.updateProfile(userUpdateInfo);
+      await currentUser.user.reload();
+    }
     updateUserData(currentUser.user);
     return currentUser.user.uid;
+  }
+
+  Future<String> signInWithGoogle() async {
+    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+    final GoogleSignInAuthentication googleSignInAuthentication =
+        await googleSignInAccount.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.getCredential(
+      accessToken: googleSignInAuthentication.accessToken,
+      idToken: googleSignInAuthentication.idToken,
+    );
+
+    final AuthResult authResult =
+        await _firebaseAuth.signInWithCredential(credential);
+    final FirebaseUser user = authResult.user;
+    print(user.photoUrl);
+
+    assert(!user.isAnonymous);
+    assert(await user.getIdToken() != null);
+
+    final FirebaseUser currentUser = await _firebaseAuth.currentUser();
+    assert(user.uid == currentUser.uid);
+    updateUserData(currentUser);
+
+    return currentUser.uid;
   }
 
   Future<FirebaseUser> getCurrentUser() async {

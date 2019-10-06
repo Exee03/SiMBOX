@@ -47,12 +47,9 @@ class _ProfileTabState extends State<ProfileTab> {
                     // crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       CircleAvatar(
+                        backgroundColor: Colors.white,
                         radius: width * 0.2,
-                        child: ClipOval(
-                          child: Image.network(
-                            snapshot.data.photoUrl,
-                          ),
-                        ),
+                        backgroundImage: NetworkImage(snapshot.data.photoUrl),
                       ),
                       SizedBox(height: 30),
                       Text(snapshot.data.displayName,

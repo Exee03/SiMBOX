@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:simbox/models/mail.dart';
 import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
 import 'package:simbox/widgets/provider_widget.dart';
@@ -49,9 +50,11 @@ class _HomeTabState extends State<HomeTab> {
     _itemRef = FirebaseDatabase.instance.reference().child('item');
     _itemRef.keepSynced(true);
     _itemSubscription = _itemRef.onValue.listen((Event event) {
+      List<Mail> _item = fromDb(event.snapshot);
       setState(() {
         _error = null;
-        _itemStatus = event.snapshot.value.toString() ?? 'synchronizing...';
+        _itemStatus =
+            _item[_item.length - 1].count.toString() ?? 'synchronizing...';
       });
     }, onError: (Object o) {
       final DatabaseError error = o;
@@ -112,12 +115,9 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                           ),
                           CircleAvatar(
+                            backgroundColor: Colors.white,
                             radius: width * 0.1,
-                            child: ClipOval(
-                              child: Image.network(
-                                user.data.photoUrl,
-                              ),
-                            ),
+                            backgroundImage: NetworkImage(user.data.photoUrl),
                           ),
                         ],
                       ),
@@ -213,60 +213,63 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Card mailCard(double height, double width) {
-    return Card(
-      margin: EdgeInsets.only(
-          bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      color: secondaryColor,
-      elevation: 10,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          const ListTile(
-            trailing: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(Icons.local_mall, size: 40),
-            ),
-            title: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('MAIL',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28.0,
-                    letterSpacing: 3,
-                  )),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: SizedBox(
-                height: 0.5,
-                width: width * 0.8,
-                child: Container(color: Colors.white)),
-          ),
-          ButtonTheme.bar(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: <Widget>[
-                  Text('Items:',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(color: Colors.white, fontSize: 18.0)),
-                  Text('  $_itemStatus',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold)),
-                ],
+  InkWell mailCard(double height, double width) {
+    return InkWell(
+      onTap: () => Navigator.of(context).pushNamed('/mailScreen'),
+      child: Card(
+        margin: EdgeInsets.only(
+            bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        color: secondaryColor,
+        elevation: 10,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const ListTile(
+              trailing: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Icon(Icons.local_mall, size: 40),
+              ),
+              title: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('MAIL',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28.0,
+                      letterSpacing: 3,
+                    )),
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: SizedBox(
+                  height: 0.5,
+                  width: width * 0.8,
+                  child: Container(color: Colors.white)),
+            ),
+            ButtonTheme.bar(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    Text('Items:',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(color: Colors.white, fontSize: 18.0)),
+                    Text('  $_itemStatus',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
