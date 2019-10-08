@@ -1,22 +1,27 @@
-// import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-// class Door {
-//   int count;
-//   String time;
-//   String date;
+class Door {
+  String status;
+  String uid;
 
-//   Door({this.count, this.time, this.date});
+  Door({this.status, this.uid});
 
-//   factory Door.fromJson(Map<String, dynamic> json) {
-//     return Door(count: json['count'], time: json['time'], date: json['date']);
-//   }
-// }
+  factory Door.fromJson(Map<String, dynamic> json) {
+    return Door(status: json['status'], uid: json['uid']);
+  }
+}
 
-// List<Door> fromDb(DataSnapshot data) {
-//   List<Door> companyList = new List();
-//   Map<String, dynamic> mapOfMaps = Map.from(data.value);
-//   mapOfMaps.values.forEach((value) {
-//     companyList.add(Door.fromJson(Map.from(value)));
-//   });
-//   return companyList;
-// }
+String getStatusDoor(DataSnapshot data, String uid) {
+  List<Door> itemList = new List();
+  Map<String, dynamic> mapOfMaps = Map.from(data.value);
+  mapOfMaps.values.forEach((value) {
+    itemList.add(Door.fromJson(Map.from(value)));
+  });
+  String status = 'Unknown';
+  itemList.forEach((e)=>{
+    if(e.uid == uid) {
+      status = e.status
+    }
+  });
+  return status;
+}

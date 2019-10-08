@@ -33,7 +33,6 @@ class _DashboardState extends State<Dashboard> {
   }
 
   _dialog(notification) {
-    print(notification['emergency']);
     if(notification['emergency'] == "true"){
       return showDialog(
         context: context,

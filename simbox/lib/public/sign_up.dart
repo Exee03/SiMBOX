@@ -77,23 +77,39 @@ class _SignUpState extends State<SignUp> {
         height: _height,
         width: _width,
         child: SafeArea(
-          child: Column(
-            children: <Widget>[
-              SizedBox(height: _height * 0.05),
-              buildHeaderText(),
-              SizedBox(height: _height * 0.05),
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    children: buildInputs() + buildButtons(),
-                  ),
+            child: ListView(
+          children: <Widget>[
+            SizedBox(height: _height * 0.1),
+            buildHeaderText(),
+            SizedBox(height: _height * 0.05),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: buildInputs() + buildButtons(),
                 ),
-              )
-            ],
-          ),
-        ),
+              ),
+            )
+          ],
+        )
+            // Column(
+            //   children: <Widget>[
+            //     SizedBox(height: _height * 0.1),
+            //     buildHeaderText(),
+            //     SizedBox(height: _height * 0.05),
+            //     Padding(
+            //       padding: const EdgeInsets.all(20.0),
+            //       child: Form(
+            //         key: formKey,
+            //         child: Column(
+            //           children: buildInputs() + buildButtons(),
+            //         ),
+            //       ),
+            //     )
+            //   ],
+            // ),
+            ),
       ),
     );
   }
@@ -122,10 +138,13 @@ class _SignUpState extends State<SignUp> {
     // if were in the sign up state add name
     if (authFormType == AuthFormType.signUp) {
       textFields.add(
-        TextFormField(
-          style: TextStyle(fontSize: 22.0),
-          decoration: buildSignUpInputDecoration("Name"),
-          onSaved: (value) => _name = value,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10.0),
+          child: TextFormField(
+            style: TextStyle(fontSize: 22.0),
+            decoration: buildSignUpInputDecoration("Name"),
+            onSaved: (value) => _name = value,
+          ),
         ),
       );
       textFields.add(SizedBox(height: 20));
@@ -133,19 +152,25 @@ class _SignUpState extends State<SignUp> {
 
     // add email & password
     textFields.add(
-      TextFormField(
-        style: TextStyle(fontSize: 22.0),
-        decoration: buildSignUpInputDecoration("Email"),
-        onSaved: (value) => _email = value,
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: TextFormField(
+          style: TextStyle(fontSize: 22.0),
+          decoration: buildSignUpInputDecoration("Email"),
+          onSaved: (value) => _email = value,
+        ),
       ),
     );
     textFields.add(SizedBox(height: 20));
     textFields.add(
-      TextFormField(
-        style: TextStyle(fontSize: 22.0),
-        decoration: buildSignUpInputDecoration("Password"),
-        obscureText: true,
-        onSaved: (value) => _password = value,
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
+        child: TextFormField(
+          style: TextStyle(fontSize: 22.0),
+          decoration: buildSignUpInputDecoration("Password"),
+          obscureText: true,
+          onSaved: (value) => _password = value,
+        ),
       ),
     );
     textFields.add(SizedBox(height: 20));
@@ -203,7 +228,7 @@ class _SignUpState extends State<SignUp> {
       ),
       _signInButton(_submitButtonText),
       FlatButton(
-        padding: EdgeInsets.only(top: 50),
+        padding: EdgeInsets.only(top: 30),
         child: Text(
           _switchButtonText,
           style: TextStyle(color: Colors.white),

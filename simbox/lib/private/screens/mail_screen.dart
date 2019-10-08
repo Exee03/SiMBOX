@@ -16,45 +16,20 @@ class MailScreen extends StatefulWidget {
 }
 
 class _MailScreenState extends State<MailScreen> with TickerProviderStateMixin {
-  List<Mail> _item;
-  // String text = '';
-  String itemCount = "0";
-  // int itemLength;
-  // // bool _value = true;
-  // DatabaseReference _itemRef;
-  // StreamSubscription<Event> _itemSubscription;
-  // DatabaseError _error;
+  String itemCount;
   DateTime date = DateTime.now();
   String dateNow = '';
 
   @override
   void initState() {
     super.initState();
-    // _itemRef = FirebaseDatabase.instance.reference().child('item');
-    // _itemRef.keepSynced(true);
-    // _itemSubscription = _itemRef.onValue.listen((Event event) {
-    // setState(() {
-    // _error = null;
-    // _item = fromDb(event.snapshot);
-    // itemLength = _item.length;
-    dateNow = date.day.toString() + ' - ' + date.month.toString() + ' - ' + date.year.toString();
-    // if (itemLength != 0) {
-    //   itemCount = _item[_item.length - 1].count.toString();
-    // }
-    // });
-    // }, onError: (Object o) {
-    //   final DatabaseError error = o;
-    //   setState(() {
-    //     _error = error;
-    //   });
-    // });
+    itemCount = '0';
+    dateNow = date.day.toString() +
+        ' - ' +
+        date.month.toString() +
+        ' - ' +
+        date.year.toString();
   }
-
-  // @override
-  // void dispose() {
-  //   super.dispose();
-  //   _itemSubscription.cancel();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -68,81 +43,88 @@ class _MailScreenState extends State<MailScreen> with TickerProviderStateMixin {
             );
           } else {
             return new Scaffold(
-              body: Container(
-                child: CustomScrollView(
-                  slivers: <Widget>[
-                    SliverAppBar(
-                      backgroundColor: secondaryColor,
-                      expandedHeight: 150.0,
-                      flexibleSpace: FlexibleSpaceBar(
-                        title: Text('$dateNow\n$itemCount Item for Today!',
-                            textAlign: TextAlign.end),
-                      ),
-                      actions: <Widget>[
-                        // Container(child: Column(
-                        //   mainAxisAlignment: MainAxisAlignment.end,
-                        //   children: <Widget>[
-                        //     Text(date.toString()),
-                        //   ],
-                        // ),)
-                      ],
-                    ),
-                    StreamBuilder(
-                        stream: Firestore.instance
-                            .collection("items")
-                            .where('userUid', isEqualTo: user.data.uid)
-                            .snapshots(),
-                        builder:
-                            (BuildContext context, AsyncSnapshot snapshot) {
-                          if (!snapshot.hasData) {
-                            return SliverFillRemaining(
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
-                          List data = snapshot.data.documents;
-                          data.forEach((e) => {
-                                if (e['date'] == dateNow)
-                                  {itemCount = e['count'].toString()}
+                body: Container(
+              child: CustomScrollView(
+                slivers: <Widget>[
+                  SliverAppBar(
+                    iconTheme: IconThemeData(color: Colors.white),
+                    backgroundColor: secondaryColor,
+                    expandedHeight: 150.0,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: StreamBuilder(
+                          stream: Firestore.instance
+                              .collection("items")
+                              .where('userUid', isEqualTo: user.data.uid)
+                              .where('date', isEqualTo: dateNow)
+                              .snapshots(),
+                          builder:
+                              (BuildContext context, AsyncSnapshot snapshot) {
+                            if (snapshot.hasData) {
+                              List list = snapshot.data.documents;
+                              list.forEach((f) {
+                                itemCount = f['count'].toString();
                               });
-
-                          return SliverPadding(
-                            padding: const EdgeInsets.all(20.0),
-                            sliver: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (BuildContext context, int index) {
-                                  DocumentSnapshot ds =
-                                      snapshot.data.documents[index];
-                                  if (snapshot.data.documents.length == 0) {
-                                    return Center(child: Text('No Item'));
-                                  } else {
-                                    return Card(
-                                      child: ListTile(
-                                        leading: Icon(Icons.card_giftcard,
-                                            size: 40, color: secondaryColor),
-                                        title: Text(ds['date']),
-                                        subtitle: Text(ds['time']),
-                                        trailing: CircleAvatar(
-                                          child: Text(ds['count'].toString(),
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                              )),
-                                          backgroundColor: secondaryColor,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                childCount: snapshot.data.documents.length,
-                              ),
+                              return Text(
+                                  '$dateNow\n$itemCount Item for Today!',
+                                  textAlign: TextAlign.end,
+                                  style: TextStyle(color: Colors.white),
+                                );
+                            } else {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                          }),
+                    ),
+                  ),
+                  StreamBuilder(
+                      stream: Firestore.instance
+                          .collection("items")
+                          .where('userUid', isEqualTo: user.data.uid)
+                          .snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot snapshot) {
+                        if (!snapshot.hasData) {
+                          return SliverFillRemaining(
+                            child: Center(
+                              child: CircularProgressIndicator(),
                             ),
                           );
-                        })
-                  ],
-                ),
+                        }
+                        return SliverPadding(
+                          padding: const EdgeInsets.all(20.0),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (BuildContext context, int index) {
+                                DocumentSnapshot ds =
+                                    snapshot.data.documents[index];
+                                if (snapshot.data.documents.length == 0) {
+                                  return Center(child: Text('No Item'));
+                                } else {
+                                  return Card(
+                                    child: ListTile(
+                                      leading: Icon(Icons.card_giftcard,
+                                          size: 40, color: secondaryColor),
+                                      title: Text(ds['date']),
+                                      subtitle: Text(ds['time']),
+                                      trailing: CircleAvatar(
+                                        child: Text(ds['count'].toString(),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            )),
+                                        backgroundColor: secondaryColor,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              childCount: snapshot.data.documents.length,
+                            ),
+                          ),
+                        );
+                      })
+                ],
               ),
-            );
+            ));
           }
         });
   }

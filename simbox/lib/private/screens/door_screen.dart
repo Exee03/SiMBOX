@@ -1,8 +1,10 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:simbox/models/door.dart';
 import 'package:simbox/services/theme.dart';
 import 'package:xlive_switch/xlive_switch.dart';
 
@@ -18,6 +20,7 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
   DatabaseReference _doorRef;
   StreamSubscription<Event> _doorSubscription;
   DatabaseError _error;
+  String userUid;
 
   @override
   void initState() {
@@ -25,21 +28,20 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
     _doorRef = FirebaseDatabase.instance.reference().child('door');
     _doorRef.keepSynced(true);
     _doorSubscription = _doorRef.onValue.listen((Event event) {
-      if (event.snapshot.value == 'Lock') {
+      FirebaseAuth.instance.currentUser().then((user) {
+        userUid = user.uid;
         setState(() {
           _error = null;
-          _doorStatus = event.snapshot.value ?? 'synchronizing...';
-          _value = false;
-          text = 'Unlock';
+          _doorStatus = getStatusDoor(event.snapshot, userUid) ?? 'syncing...';
+          if (_doorStatus == 'Lock') {
+            _value = false;
+            text = 'Unlock';
+          } else if (_doorStatus == 'Unlock') {
+            _value = true;
+            text = 'Lock';
+          }
         });
-      } else {
-        setState(() {
-          _error = null;
-          _doorStatus = event.snapshot.value ?? 'synchronizing...';
-          _value = true;
-          text = 'Lock';
-        });
-      }
+      });
     }, onError: (Object o) {
       final DatabaseError error = o;
       setState(() {
@@ -57,14 +59,18 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, iconTheme: IconThemeData(color: primaryColor),),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: IconThemeData(color: primaryColor),
+      ),
       body: Container(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.only(bottom: 20.0),
               child: buildIcon(),
             ),
             Text('Switch the toggle to',
@@ -91,9 +97,11 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
 
   Icon buildIcon() {
     if (_value == true) {
-      return Icon(Icons.lock_open, color: CupertinoColors.activeGreen, size: 100);
+      return Icon(Icons.lock_open,
+          color: CupertinoColors.activeGreen, size: 100);
     } else {
-      return Icon(Icons.lock_outline, color: CupertinoColors.destructiveRed, size: 100);
+      return Icon(Icons.lock_outline,
+          color: CupertinoColors.destructiveRed, size: 100);
     }
   }
 
@@ -104,8 +112,10 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
       status = 'Unlock';
       reverseStatus = 'Lock';
     }
-    await _doorRef.runTransaction((MutableData mutableData) async {
-      mutableData.value = status;
+    await _doorRef
+        .child(userUid)
+        .runTransaction((MutableData mutableData) async {
+      mutableData.value = {'uid': userUid, 'status': status};
       return mutableData;
     });
     setState(() {
