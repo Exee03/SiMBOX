@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:simbox/models/door.dart';
 import 'package:simbox/models/mail.dart';
 import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
@@ -27,9 +28,11 @@ class _HomeTabState extends State<HomeTab> {
   StreamSubscription<Event> _doorSubscription;
   // StreamSubscription<Event> _itemSubscription;
   DatabaseError _error;
-  Color doorCardColor = CupertinoColors.destructiveRed;
+  Color doorCardColor = CupertinoColors.activeOrange;
   DateTime date = DateTime.now();
   String dateNow = '';
+  Door _door;
+  FirebaseUser _user;
 
   @override
   void initState() {
@@ -43,12 +46,20 @@ class _HomeTabState extends State<HomeTab> {
     _doorRef = FirebaseDatabase.instance.reference().child('door');
     _doorRef.keepSynced(true);
     _doorSubscription = _doorRef.onValue.listen((Event event) {
-      setState(() {
-        _error = null;
-        _doorStatus = event.snapshot.value ?? 'synchronizing...';
-        if (_doorStatus == 'Unlock') {
-          doorCardColor = CupertinoColors.activeGreen;
-        }
+      FirebaseAuth.instance.currentUser().then((user) {
+        _user = user;
+        setState(() {
+          _error = null;
+          _doorStatus = getStatusDoor(event.snapshot, user.uid);
+          // _doorStatus = event.snapshot.value ?? 'synchronizing...';
+          if (_doorStatus == 'Unlock') {
+            doorCardColor = CupertinoColors.activeGreen;
+          } else if (_doorStatus == 'Unknown') {
+            doorCardColor = CupertinoColors.activeOrange;
+          } else if (_doorStatus == 'Lock') {
+            doorCardColor = CupertinoColors.destructiveRed;
+          }
+        });
       });
     }, onError: (Object o) {
       final DatabaseError error = o;
@@ -56,21 +67,6 @@ class _HomeTabState extends State<HomeTab> {
         _error = error;
       });
     });
-    // _itemRef = FirebaseDatabase.instance.reference().child('item');
-    // _itemRef.keepSynced(true);
-    // _itemSubscription = _itemRef.onValue.listen((Event event) {
-    //   List<Mail> _item = fromDb(event.snapshot);
-    //   setState(() {
-    //     _error = null;
-    //     _itemStatus =
-    //         _item[_item.length - 1].count.toString() ?? 'synchronizing...';
-    //   });
-    // }, onError: (Object o) {
-    //   final DatabaseError error = o;
-    //   setState(() {
-    //     _error = error;
-    //   });
-    // });
   }
 
   @override
@@ -82,103 +78,139 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    AuthService auth = Provider.of(context).auth;
     final height = MediaQuery.of(context).size.height;
     final width = MediaQuery.of(context).size.width;
-    return FutureBuilder<FirebaseUser>(
-        future: auth.getCurrentUser(),
-        builder: (context, user) {
-          if (!user.hasData) {
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-          return Stack(
-            children: <Widget>[
-              Container(
-                  padding: EdgeInsets.all(40),
-                  constraints: BoxConstraints.expand(height: height * 0.4),
-                  decoration: BoxDecoration(
-                    gradient: new LinearGradient(
-                      colors: [primaryColor, Colors.blueAccent],
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topRight,
-                      stops: [0.2, 1.0],
-                      tileMode: TileMode.clamp,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
-                    ),
-                  ),
-                  child: Container(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Expanded(
-                          child: Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  "Hi !\n${user.data.displayName}",
-                                  style: TextStyle(
-                                      fontFamily: 'OpenSans',
-                                      fontSize: 25.0,
-                                      color: secondaryColor),
-                                ),
-                              ),
-                              CircleAvatar(
-                                backgroundColor: Colors.white,
-                                radius: width * 0.1,
-                                backgroundImage:
-                                    NetworkImage(user.data.photoUrl),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          height: height * 0.01,
-                        ),
-                        Text(
-                          "Dashboard",
-                          style: TextStyle(
-                              fontFamily: 'OpenSans',
-                              fontSize: 50.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        )
-                      ],
-                    ),
-                  )),
-              Container(
-                // color: Colors.red,
-                // height: 500,
-                margin: EdgeInsets.only(top: height * 0.42),
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: <Widget>[
-                    doorCard(height, width),
-                    mailCard(height, width, user.data)
-                  ],
+    if (_user == null) {
+      return Center(
+        child: CircularProgressIndicator(),
+      );
+    } else {
+      return Stack(
+        children: <Widget>[
+          Container(
+              padding: EdgeInsets.all(40),
+              constraints: BoxConstraints.expand(height: height * 0.4),
+              decoration: BoxDecoration(
+                gradient: new LinearGradient(
+                  colors: [primaryColor, Colors.blueAccent],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topRight,
+                  stops: [0.2, 1.0],
+                  tileMode: TileMode.clamp,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
                 ),
               ),
+              child: Container(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              "Hi !\n${_user.displayName}",
+                              style: TextStyle(
+                                  fontFamily: 'OpenSans',
+                                  fontSize: 25.0,
+                                  color: secondaryColor),
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: Colors.white,
+                            radius: width * 0.1,
+                            backgroundImage: NetworkImage(_user.photoUrl),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: height * 0.01,
+                    ),
+                    Text(
+                      "Dashboard",
+                      style: TextStyle(
+                          fontSize: 50.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    )
+                  ],
+                ),
+              )),
+          Container(
+            margin: EdgeInsets.only(top: height * 0.42),
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              children: <Widget>[
+                doorCard(height, width),
+                mailCard(height, width, _user)
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  void _showDialog() {
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Oppsss...',
+              style: TextStyle(fontSize: 30),
+            ),
+            content: Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              child: Column(
+                children: <Widget>[
+                  SizedBox(height: 10),
+                  Text(
+                    'There are something with your SiMBOX.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    'Please contact KoolBox Intelligent (M) Pvt. Ltd. for more infomation.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text("Close"),
+                onPressed: () => Navigator.of(context).pop(),
+              )
             ],
           );
         });
   }
 
-  InkWell doorCard(double height, double width) {
-    return InkWell(
-      onTap: () => Navigator.of(context).pushNamed('/doorScreen'),
-      child: Card(
-        margin: EdgeInsets.only(
-            bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        color: doorCardColor,
-        elevation: 10,
+  Card doorCard(double height, double width) {
+    return Card(
+      margin: EdgeInsets.only(
+          bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      color: doorCardColor,
+      elevation: 10,
+      child: InkWell(
+        onTap: () {
+          if (_doorStatus == 'Unknown') {
+            _showDialog();
+          } else {
+            Navigator.of(context).pushNamed('/doorScreen');
+          }
+        },
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -226,17 +258,17 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  InkWell mailCard(double height, double width, FirebaseUser user) {
-    return InkWell(
-      onTap: () => Navigator.of(context).pushNamed('/mailScreen'),
-      child: Card(
-        margin: EdgeInsets.only(
-            bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        color: secondaryColor,
-        elevation: 10,
+  Card mailCard(double height, double width, FirebaseUser user) {
+    return Card(
+      margin: EdgeInsets.only(
+          bottom: height * 0.03, left: width * 0.1, right: width * 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15.0),
+      ),
+      color: secondaryColor,
+      elevation: 10,
+      child: InkWell(
+        onTap: () => Navigator.of(context).pushNamed('/mailScreen'),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
