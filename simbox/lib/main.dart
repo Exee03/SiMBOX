@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         title: "SiMBOX",
         theme: ThemeData(
           fontFamily: 'OpenSans',
-          primarySwatch: Colors.green,
+          primarySwatch: Colors.deepPurple,
         ),
         home: CustomSplash(
           imagePath: 'assets/app_logo_icon.png',
