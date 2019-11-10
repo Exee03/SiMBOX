@@ -1,15 +1,11 @@
 import 'dart:async';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:simbox/models/door.dart';
 import 'package:simbox/models/mail.dart';
-import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
-import 'package:simbox/widgets/provider_widget.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({
@@ -22,27 +18,30 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   String _doorStatus;
-  // String _itemStatus;
+  String _itemStatus;
   DatabaseReference _doorRef;
-  // DatabaseReference _itemRef;
+  DatabaseReference _itemRef;
   StreamSubscription<Event> _doorSubscription;
-  // StreamSubscription<Event> _itemSubscription;
+  StreamSubscription<Event> _itemSubscription;
   DatabaseError _error;
   Color doorCardColor = CupertinoColors.activeOrange;
-  DateTime date = DateTime.now();
-  String dateNow = '';
-  Door _door;
   FirebaseUser _user;
 
   @override
   void initState() {
     super.initState();
-    dateNow = date.day.toString() +
-        ' - ' +
-        date.month.toString() +
-        ' - ' +
-        date.year.toString();
+    doorDbListeners();
+    itemDbListeners();
+  }
 
+  @override
+  void dispose() {
+    super.dispose();
+    _doorSubscription.cancel();
+    _itemSubscription.cancel();
+  }
+
+  void doorDbListeners() {
     _doorRef = FirebaseDatabase.instance.reference().child('door');
     _doorRef.keepSynced(true);
     _doorSubscription = _doorRef.onValue.listen((Event event) {
@@ -69,11 +68,22 @@ class _HomeTabState extends State<HomeTab> {
     });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    _doorSubscription.cancel();
-    // _itemSubscription.cancel();
+  void itemDbListeners() {
+    _itemRef = FirebaseDatabase.instance.reference().child('item');
+    _itemRef.keepSynced(true);
+    _itemSubscription = _itemRef.onValue.listen((Event event) {
+      List<Mail> _item = fromDb(event.snapshot);
+      setState(() {
+        _error = null;
+        _itemStatus =
+            _item[_item.length - 1].count.toString() ?? 'synchronizing...';
+      });
+    }, onError: (Object o) {
+      final DatabaseError error = o;
+      setState(() {
+        _error = error;
+      });
+    });
   }
 
   @override
@@ -208,7 +218,7 @@ class _HomeTabState extends State<HomeTab> {
           if (_doorStatus == 'Unknown') {
             _showDialog();
           } else {
-            Navigator.of(context).pushNamed('/doorScreen');
+            Navigator.pushNamed(context, '/doorScreen');
           }
         },
         child: Column(
@@ -268,7 +278,7 @@ class _HomeTabState extends State<HomeTab> {
       color: secondaryColor,
       elevation: 10,
       child: InkWell(
-        onTap: () => Navigator.of(context).pushNamed('/mailScreen'),
+        onTap: () => Navigator.pushNamed(context, '/mailScreen'),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -303,30 +313,12 @@ class _HomeTabState extends State<HomeTab> {
                     Text('Items:',
                         textAlign: TextAlign.right,
                         style: TextStyle(color: Colors.white, fontSize: 18.0)),
-                    StreamBuilder(
-                        stream: Firestore.instance
-                            .collection("items")
-                            .where('userUid', isEqualTo: user.uid)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          List data = snapshot.data.documents;
-                          String itemCount = '0';
-                          data.forEach((e) => {
-                                if (e['date'] == dateNow)
-                                  {itemCount = e['count'].toString()}
-                              });
-                          return Text('  $itemCount',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold));
-                        }),
+                    Text('  $_itemStatus',
+                        textAlign: TextAlign.right,
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

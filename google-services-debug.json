@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1045637830172",
+    "firebase_url": "https://simbox-debug.firebaseio.com",
+    "project_id": "simbox-debug",
+    "storage_bucket": "simbox-debug.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1045637830172:android:62ee468b4ad05e3026f1d9",
+        "android_client_info": {
+          "package_name": "com.example.simbox"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1045637830172-eju74l9oa4ak7nkbrukkl98rbpenrhm3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNEhiJV1bUF_G2BqmzYM0tBt-3pDfN7sE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1045637830172-eju74l9oa4ak7nkbrukkl98rbpenrhm3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

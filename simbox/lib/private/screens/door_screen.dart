@@ -25,6 +25,10 @@ class _DoorScreenState extends State<DoorScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    doorDbListeners();
+  }
+
+  void doorDbListeners() {
     _doorRef = FirebaseDatabase.instance.reference().child('door');
     _doorRef.keepSynced(true);
     _doorSubscription = _doorRef.onValue.listen((Event event) {

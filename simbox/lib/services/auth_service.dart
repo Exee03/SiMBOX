@@ -64,6 +64,7 @@ class AuthService {
     final FirebaseUser currentUser = await _firebaseAuth.currentUser();
     assert(user.uid == currentUser.uid);
     updateUserData(currentUser);
+    googleSignIn.disconnect();
 
     return currentUser.uid;
   }

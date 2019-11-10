@@ -5,25 +5,13 @@ admin.initializeApp(functions.config().firebase);
 
 const firestore = admin.firestore();
 
-const spawn = require('child-process-promise').spawn;
-const path = require('path');
-const os = require('os');
-const fs = require('fs');
-
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
-
 exports.itemTrigger = functions.database.ref(
-    'item/{itemUid}'
+    'item/{userUid}'
 ).onWrite(async (change, context) => {
     const msgData = change.after.val();
     const before = change.before.val();
     const userId = msgData.uid;
-    console.log(userId);
+    console.log('ID', userId);
 
     var currentDate = new Date();
     var date = currentDate.getDate();
@@ -63,14 +51,14 @@ exports.itemTrigger = functions.database.ref(
     console.log('To : ' + msgData.count);
 
 
-    if (before.count === msgData.count || msgData.count === 0) {
+    if (before.count === msgData.count) {
         console.log('Nothing change!');
         return null;
     }
 
-    await firestore.collection('users').where("uid", "==", userId).get().then((snapshots) => {
+    console.log("Check Firestore");
+    return firestore.collection('users').where("uid", "==", userId).get().then((snapshots) => {
         var tokens = [];
-        console.log("Check Firestore");
         if (snapshots.empty) {
             console.log('No devices');
             return null;
@@ -90,34 +78,42 @@ exports.itemTrigger = functions.database.ref(
                 console.log("after get token");
             }
             console.log('before detected loop');
-            if (msgData.status === 'Detected!') {
-                console.log('entering detected loop');
-
-                return sendNotiItem(msgData, tokens, dateMonthYear, hourMinute, userId);
-            }
-            else {
-                console.log("Item : " + msgData.count);
-                return null;
-            }
+            return sendNotiItem(msgData, tokens, dateMonthYear, hourMinute, userId);
         }
     })
-    console.log('outsite firestore loop');
-    return null;
 });
 
 async function sendNotiItem(data, tokens, dateMonthYear, hourMinute, userId) {
-
-    await saveItems(userId, data.count, 'Your goods is arrived, please check and take your goods in Mailbox.', dateMonthYear, hourMinute);
-    console.log('exit saveFirestore');
-    var payload = {
-        notification: {
-            title: 'Your stuff is here !',
-            body: 'Your goods is arrived, please check and take your goods in Mailbox.',
-        },
-        data: {
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-            'title': 'Total : ' + data.count,
-            'time': dateMonthYear + ' at ' + hourMinute
+    var payload = {}
+    if (data.count === 0) {
+        await saveItems(userId, data.count, 'Your stuff have been safely taken away.', dateMonthYear, hourMinute);
+        console.log('exit saveFirestore');
+        payload = {
+            notification: {
+                title: 'Congratulations !',
+                body: 'Your stuff have been safely taken away.',
+            },
+            data: {
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'count': data.count.toString(),
+                'time': dateMonthYear + ' at ' + hourMinute,
+                'emergency': 'false'
+            }
+        }
+    } else {
+        await saveItems(userId, data.count, 'Your goods is arrived, please check and take your goods in Mailbox.', dateMonthYear, hourMinute);
+        console.log('exit saveFirestore');
+        payload = {
+            notification: {
+                title: 'Your stuff is here !',
+                body: 'Your goods is arrived, please check and take your goods in Mailbox.',
+            },
+            data: {
+                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+                'count': data.count.toString(),
+                'time': dateMonthYear + ' at ' + hourMinute,
+                'emergency': 'false'
+            }
         }
     }
     var options = {
@@ -136,7 +132,7 @@ async function sendNotiItem(data, tokens, dateMonthYear, hourMinute, userId) {
 function saveItems(userId, count, details, dateMonthYear, hourMinute) {
     console.log('enter saveItems');
 
-    const ref = firestore.collection("items").doc(userId);
+    const ref = firestore.collection("items");
 
     const newData = {
         count: count,
@@ -154,12 +150,12 @@ function saveItems(userId, count, details, dateMonthYear, hourMinute) {
 }
 
 exports.statusTrigger = functions.database.ref(
-    'camera'
+    'camera/{userUid}'
 ).onWrite(async (change, context) => {
     const msgData = change.after.val();
     const before = change.before.val();
     const userId = msgData.uid;
-    console.log(userId);
+    console.log('ID ', userId);
 
     var currentDate = new Date();
     var date = currentDate.getDate();
@@ -196,15 +192,16 @@ exports.statusTrigger = functions.database.ref(
     }
 
     console.log(dateMonthYear + ' at ' + hourMinute);
-    console.log('From : ' + before.status);
-    console.log('To : ' + msgData.status);
+    console.log('From : ' + before.time);
+    console.log('To : ' + msgData.time);
 
-    if (before.status === msgData.status) {
+    if (before.time === msgData.time) {
         console.log('Nothing change!');
         return null;
     }
 
-    await firestore.collection('users').where("uid", "==", userId).get().then((snapshots) => {
+    console.log("Check Firestore");
+    return firestore.collection('users').where("uid", "==", userId).get().then((snapshots) => {
         var tokens = [];
         console.log("Check Firestore");
         if (snapshots.empty) {
@@ -226,98 +223,54 @@ exports.statusTrigger = functions.database.ref(
                 console.log("after get token");
             }
             console.log('before detected loop');
-            if (msgData.status === 'Detected!') {
-                console.log('entering detected loop');
-
-                return sendNotiEmergency(msgData, tokens, dateMonthYear, hourMinute, hourMinute2, userId);
-            }
-            else {
-                console.log("Status : " + msgData.status);
-                return null;
-            }
+            return sendNotiEmergency(msgData, tokens, dateMonthYear, hourMinute, hourMinute2, userId);
         }
-    })
-    console.log('outsite firestore loop');
-    return null;
+    });
 })
 
 async function sendNotiEmergency(data, tokens, dateMonthYear, hourMinute, hourMinute2, userId) {
-    const filePath = 'image.png';
-    const contentType = 'image/png';
-    const fileName = path.basename(filePath);
-
-    const bucket = admin.storage().bucket('simbox-7680b.appspot.com');
-    const tempFilePath = path.join(os.tmpdir(), fileName);
-    const metadata = {
-        contentType: contentType,
-    };
-    await bucket.file(filePath).download({ destination: tempFilePath });
-    console.log('Image downloaded locally to', tempFilePath);
-    // Generate a thumbnail using ImageMagick.
-    await spawn('convert', [tempFilePath, '-thumbnail', '200x200>', tempFilePath]);
-    console.log('Thumbnail created at', tempFilePath);
-    // We rename thumbnails file name. That's where we'll upload the thumbnail.
-    const thumbFileName = `${data.uid}_${dateMonthYear}_${hourMinute2}`;
-    const thumbFilePath = path.join(path.dirname(filePath), thumbFileName);
-    // Uploading the thumbnail.
-
-    return bucket.upload(tempFilePath, {
-        destination: thumbFilePath,
-        metadata: metadata,
-        predefinedAcl: 'publicRead'
-    }).then(result => {
-        const file = result[0];
-        return file.getMetadata();
-    }).then(async results => {
-        const metadata = results[0];
-        console.log('metadata=', metadata.mediaLink);
-        console.log('hourMinute ', hourMinute);
-        await saveCamera(userId, 'Status : ' + data.status, 'An unknown person attempts to enter your office.', dateMonthYear, hourMinute, metadata.mediaLink);
-        console.log('exit saveFirestore');
-        var payload = {
-            notification: {
-                title: 'Emergency !!!',
-                body: 'An unknown person attempts to open your Mailbox.',
-            },
-            data: {
-                'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-                'title': 'Status : ' + data.status,
-                'url': metadata.mediaLink,
-                'time': dateMonthYear + ' at ' + hourMinute
-            }
+    console.log('hourMinute ', hourMinute);
+    await saveCamera(userId, 'Status : Emergency', 'An unknown person attempts to open your Mailbox.', dateMonthYear, hourMinute, data);
+    console.log('exit saveFirestore');
+    var payload = {
+        notification: {
+            title: 'Emergency !!!',
+            body: 'An unknown person attempts to open your Mailbox.',
+        },
+        data: {
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+            'title': 'Status : Emergency!',
+            'url': data.full,
+            'time': dateMonthYear + ' at ' + hourMinute,
+            'emergency': 'true'
         }
-        var options = {
-            priority: "high",
-            timeToLive: 60 * 60 * 24,
-            contentAvailable: true
-        };
+    }
+    var options = {
+        priority: "high",
+        timeToLive: 60 * 60 * 24,
+        contentAvailable: true
+    };
 
-        // eslint-disable-next-line promise/no-nesting
-        return admin.messaging().sendToDevice(tokens, payload, options).then((response) => {
-            return console.log('Successfully push notifications : ' + response);
-        }).catch((err) => {
-            console.log('Error : ' + err);
-        })
-    }).then((_) => {
-        console.log('fs.unlinkSync(tempFilePath)')
-        // Once the thumbnail has been uploaded delete the local file to free up disk space.
-        return fs.unlinkSync(tempFilePath);
-    }).catch(error => {
-        console.error(error);
+    // eslint-disable-next-line promise/no-nesting
+    return admin.messaging().sendToDevice(tokens, payload, options).then((response) => {
+        return console.log('Successfully push notifications : ' + response);
+    }).catch((err) => {
+        console.log('Error : ' + err);
     });
 }
 
-function saveCamera(userId, titles, details, dateMonthYear, hourMinute, imageURL) {
+function saveCamera(userId, titles, details, dateMonthYear, hourMinute, data) {
     console.log('enter saveHistory');
 
-    const ref = firestore.collection("camera").doc(userId);
+    const ref = firestore.collection("camera");
 
     const newData = {
         title: titles,
         detail: details,
         time: hourMinute,
         date: dateMonthYear,
-        imageURL: imageURL,
+        imageURL: data.full,
+        imageFaceURL: data.face,
         userUid: userId
     }
 
