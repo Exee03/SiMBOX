@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
@@ -63,6 +62,7 @@ class _SecurityTabState extends State<SecurityTab> {
                     stream: Firestore.instance
                         .collection("camera")
                         .where('userUid', isEqualTo: user.data.uid)
+                        .orderBy("date")
                         .snapshots(),
                     builder: (BuildContext context, AsyncSnapshot snapshot) {
                       if (!snapshot.hasData) {

@@ -81,6 +81,7 @@ class _MailScreenState extends State<MailScreen> with TickerProviderStateMixin {
                       stream: Firestore.instance
                           .collection("items")
                           .where('userUid', isEqualTo: user.data.uid)
+                          .orderBy("date")
                           .snapshots(),
                       builder: (BuildContext context, AsyncSnapshot snapshot) {
                         if (!snapshot.hasData) {

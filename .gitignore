@@ -63,3 +63,7 @@ node_modules/
 
 # dotenv environment variables file
 .env
+
+*google-services-debug.json
+*google-services-old.json
+*google-services.json

@@ -5,7 +5,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:simbox/models/door.dart';
 import 'package:simbox/models/mail.dart';
+import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
+import 'package:simbox/widgets/provider_widget.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({

@@ -1,10 +1,13 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:simbox/private/tabs/home.dart';
 import 'package:simbox/private/tabs/profile.dart';
 import 'package:simbox/private/tabs/security.dart';
+import 'package:simbox/services/auth_service.dart';
 import 'package:simbox/services/theme.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:simbox/widgets/provider_widget.dart';
 
 class Dashboard extends StatefulWidget {
   
@@ -43,6 +46,8 @@ class _DashboardState extends State<Dashboard> {
   }
   
   _dialog(notification) {
+    final AuthService auth = Provider.of(context).auth;
+    final db = FirebaseDatabase.instance.reference();
     if (notification['emergency'] == "true") {
         return showDialog(
           context: context,
@@ -51,16 +56,16 @@ class _DashboardState extends State<Dashboard> {
             title: Text(notification['title'],
                 style: TextStyle(fontSize: 20, color: primaryColor)),
             content: Container(
-              height: 260,
+              height: 300,
               width: MediaQuery.of(context).size.width * 0.8,
-              child: Column(
+              child: Wrap(
                 children: <Widget>[
                   new Image(
                     image: new CachedNetworkImageProvider(notification['url']),
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'An unknown person attempts to open your Mailbox on ${notification['time']} !',
+                    'An unknown person attempts to open your Mailbox on ${notification['time']} !\nNow your buzzer on Mailbox is buzzering.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 15),
                   ),
@@ -68,6 +73,18 @@ class _DashboardState extends State<Dashboard> {
               ),
             ),
             actions: <Widget>[
+              // FlatButton(
+              //   onPressed: () {
+              //     auth.getCurrentUser().then((user) {
+              //       db.child('alarm').child(user.uid).set({
+              //         'uid':user.uid,
+              //         'state': false
+              //       });
+              //       Navigator.of(context).pop();
+              //     });
+              //   },
+              //   child: Text('Turn OFF'),
+              // ),
               FlatButton(
                 onPressed: () {
                   Navigator.of(context).pop();

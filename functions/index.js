@@ -229,6 +229,8 @@ exports.statusTrigger = functions.database.ref(
 })
 
 async function sendNotiEmergency(data, tokens, dateMonthYear, hourMinute, hourMinute2, userId) {
+    console.log('image :', data.full);
+    
     console.log('hourMinute ', hourMinute);
     await saveCamera(userId, 'Status : Emergency', 'An unknown person attempts to open your Mailbox.', dateMonthYear, hourMinute, data);
     console.log('exit saveFirestore');
