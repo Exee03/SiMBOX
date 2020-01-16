@@ -74,5 +74,7 @@
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 
 *google-services.json
+*google-services-debug.json
+*google-services-old.json
 *key.jks
 *key.properties
