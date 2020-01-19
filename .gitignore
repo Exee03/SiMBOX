@@ -67,3 +67,4 @@ node_modules/
 *google-services-debug.json
 *google-services-old.json
 *google-services.json
+*serviceAccountKey.json
